@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medication Reminder - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+
+<div class="flex items-center justify-center min-h-screen bg-gray-100">
+    <div class="bg-white p-8 rounded-lg shadow-md w-80">
+        <h2 class="text-2xl font-bold text-center mb-6">Medication Reminder Dashboard</h2>
+
+        <!-- Display reminders -->
+        <div id="reminders-list"></div>
+
+        <a href="/" class="block mt-4 text-blue-500 text-center">Logout</a>
+    </div>
+</div>
+
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const userId = urlParams.get('user_id');
+
+// Fetch reminders for the logged-in user
+fetch(`/get-reminders?user_id=${userId}`)
+    .then(response => response.json())
+    .then(data => {
+        const remindersList = document.getElementById('reminders-list');
+        if (data.length === 0) {
+            remindersList.innerHTML = "<p>No reminders set.</p>";
+        } else {
+            let html = '<ul>';
+            data.forEach(reminder => {
+                html += `
+                    <li class="mb-4">
+                        <strong>Medication:</strong> ${reminder.medication}<br>
+                        <strong>Reminder Time:</strong> ${reminder.reminder_time}<br>
+                        <strong>Sound:</strong> ${reminder.sound}
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            remindersList.innerHTML = html;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+</script>
+
+</body>
+</html>

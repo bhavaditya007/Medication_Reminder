@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Reminder</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f3f4f6;
+      padding: 20px;
+    }
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Create Reminder</h1>
+    <div>
+      <label for="title">Title</label>
+      <input type="text" id="title" name="title" placeholder="Enter reminder title" required>
+      
+      <label for="description">Description</label>
+      <input type="text" id="description" name="description" placeholder="Enter description" required>
+      
+      <label for="reminderTime">Reminder Time</label>
+      <input type="datetime-local" id="reminderTime" name="reminderTime" required>
+      
+      <button id="setReminderButton">Set Reminder</button>
+    </div>
+    <div id="message"></div>
+  </div>
+
+  <script>
+    // Add event listener to the button
+    document.getElementById('setReminderButton').addEventListener('click', async function(event) {
+      event.preventDefault(); // Prevent default button behavior
+
+      const title = document.getElementById('title').value;
+      const description = document.getElementById('description').value;
+      const reminderTime = document.getElementById('reminderTime').value;
+
+      try {
+        const response = await fetch('http://127.0.0.1:5000/reminders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title,
+            description,
+            reminder_time: reminderTime,
+          }),
+        });
+
+        const data = await response.json();
+        const messageDiv = document.getElementById('message');
+
+        if (response.ok) {
+          messageDiv.style.color = 'green';
+          messageDiv.textContent = data.message;
+
+          // Set the reminder for the user
+          checkReminderTime(reminderTime, "beep_sound.mp3");
+        } else {
+          messageDiv.style.color = 'red';
+          messageDiv.textContent = data.message || 'Failed to create reminder.';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        const messageDiv = document.getElementById('message');
+        messageDiv.style.color = 'red';
+        messageDiv.textContent = 'An error occurred while creating the reminder.';
+      }
+    });
+
+    function checkReminderTime(reminderTime, sound) {
+      const reminderDate = new Date(reminderTime);
+      const currentDate = new Date();
+
+      const timeDifference = reminderDate - currentDate;
+
+      if (timeDifference <= 0) {
+        alert('The reminder time has already passed!');
+        return;
+      }
+
+      setTimeout(function() {
+        showNotification("Your Medication Reminder");
+        playSound(sound);
+      }, timeDifference);
+    }
+
+    function playSound(soundFile) {
+      const audio = new Audio(soundFile); // Replace 'beep_sound.mp3' with the correct file path
+      audio.play();
+    }
+
+    function showNotification(message) {
+      if (Notification.permission === "granted") {
+        new Notification("Reminder Alert", {
+          body: message,
+        });
+      }
+    }
+
+    // Request notification permission on page load
+    if (Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+  </script>
+</body>
+</html>
